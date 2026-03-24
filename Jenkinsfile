@@ -86,7 +86,6 @@
 //     }
 // }
 
-
 pipeline {
     agent any
 
@@ -112,7 +111,7 @@ pipeline {
             }
         }
 
-        stage('Check Minikube') {
+        stage('Verify Minikube Cluster') {
             steps {
                 bat '''
                 minikube status
@@ -147,10 +146,10 @@ pipeline {
             }
         }
 
-        stage('Get Access URL') {
+        stage('Access Application') {
             steps {
                 bat '''
-                echo ===== ACCESS YOUR APPLICATION =====
+                echo ===== ACCESS DETAILS =====
                 minikube ip
                 kubectl get svc my-app1-service
                 '''
