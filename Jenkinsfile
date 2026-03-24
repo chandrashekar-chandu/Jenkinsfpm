@@ -51,35 +51,108 @@
 
 
 
+// pipeline {
+//     agent any
+
+//     stages {
+
+//         stage('Build Docker Image') {
+//             steps {
+//                 bat 'docker build -t my-app1 .'
+//             }
+//         }
+
+//         stage('Run Docker Container') {
+//             steps {
+//                 bat '''
+//                 docker rm -f my-container || exit 0
+//                 docker run -d -p 3001:3001 --name my-container my-app1
+//                 '''
+//             }
+//         }
+
+//         stage('Deploy to Kubernetes'){
+//             steps{
+//                 bat '''
+//                 set KUBECONFIG=C:\\Users\\Chandrashekar Gajula\\.kube\\config
+
+//                 kubectl get nodes
+//                 minikube image load my-app1:latest
+//                 kubectl apply -f k8s/deployment.yaml
+//                 kubectl apply -f k8s/service.yaml
+//                 '''
+//             }
+//         }
+//     }
+// }
+
+
 pipeline {
     agent any
+
+    environment {
+        KUBECONFIG = "C:\\Users\\Chandrashekar Gajula\\.kube\\config"
+    }
 
     stages {
 
         stage('Build Docker Image') {
             steps {
-                bat 'docker build -t my-app1 .'
+                bat 'docker build -t my-app1:latest .'
             }
         }
 
-        stage('Run Docker Container') {
+        stage('Run Docker Container (Local Test)') {
             steps {
                 bat '''
-                docker rm -f my-container || exit 0
-                docker run -d -p 3001:3001 --name my-container my-app1
+                docker stop my-container || true
+                docker rm my-container || true
+                docker run -d -p 3001:3001 --name my-container my-app1:latest
                 '''
             }
         }
 
-        stage('Deploy to Kubernetes'){
-            steps{
+        stage('Check Minikube') {
+            steps {
                 bat '''
-                set KUBECONFIG=C:\\Users\\Chandrashekar Gajula\\.kube\\config
-
+                minikube status
                 kubectl get nodes
+                '''
+            }
+        }
+
+        stage('Load Image into Minikube') {
+            steps {
+                bat '''
                 minikube image load my-app1:latest
+                '''
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                bat '''
                 kubectl apply -f k8s/deployment.yaml
                 kubectl apply -f k8s/service.yaml
+                '''
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                bat '''
+                kubectl get pods
+                kubectl get svc
+                '''
+            }
+        }
+
+        stage('Get Access URL') {
+            steps {
+                bat '''
+                echo ===== ACCESS YOUR APPLICATION =====
+                minikube ip
+                kubectl get svc my-app1-service
                 '''
             }
         }
