@@ -71,5 +71,22 @@ pipeline {
                 '''
             }
         }
+        stage('Use Existing Minikube'){
+            steps{
+                bat'''
+                kubectl get nodes
+                '''
+            }
+        }
+        stage('Deploy to Kubernetes'){
+            steps{
+                bat '''
+                minikube image load my-app1:latest
+                kubectl apply -f k8s/deployment.yaml
+                kubectl apply -f k8s/service.yaml
+                minikube service my-app1-service --url
+                '''
+            }
+        }
     }
 }
